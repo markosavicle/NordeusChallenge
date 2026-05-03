@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d110db6ab78faa4fbacf34bbaba8a97, type: 3}
+  m_Name: Troll
+  m_EditorClassIdentifier: 
+  id: 5
+  description: 
+  maxHp: 200
+  attack: 18
+  defense: 18
+  speed: 20
+  luck: 0
+  availableMoves:
+  - {fileID: 11400000, guid: 675533e6c368ad44dbdd362a3da0b475, type: 2}
+  - {fileID: 11400000, guid: a465a84f7d6970542ba7b010a51e7644, type: 2}
+  - {fileID: 11400000, guid: eb8bdfb83454ae44c91a1185a43ebc81, type: 2}
+  xpReward: 20

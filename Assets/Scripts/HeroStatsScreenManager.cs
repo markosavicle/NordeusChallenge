@@ -159,17 +159,17 @@ namespace NordeusChallenge.Unity
             if (availablePointsText != null)
                 availablePointsText.text = $"Available: {availablePoints}";
 
-            // Stats display
+            // Stats display: Shows permanent stat + what you have pending in this session
             if (hpText != null)
-                hpText.text = $"{hero.MaxHp}";
+                hpText.text = $"{hero.MaxHp + (tempStatAllocations["hp"] * 10)}";
             if (attackText != null)
-                attackText.text = $"{hero.Attack}";
+                attackText.text = $"{hero.Attack + tempStatAllocations["attack"]}";
             if (defenseText != null)
-                defenseText.text = $"{hero.Defense}";
+                defenseText.text = $"{hero.Defense + tempStatAllocations["defense"]}";
             if (speedText != null)
-                speedText.text = $"{hero.Speed}";
+                speedText.text = $"{hero.Speed + tempStatAllocations["speed"]}";
             if (luckText != null)
-                luckText.text = $"{hero.Luck}";
+                luckText.text = $"{hero.Luck + tempStatAllocations["luck"]}";
 
             // Move slots display
             DisplayMoveSlots();
@@ -223,36 +223,31 @@ namespace NordeusChallenge.Unity
 
         private void ResetStatAllocation()
         {
-            // Calculation: Total points ever earned - Points already permanently spent
-            // Assuming you start at level 1 and get 3 points per level up
-            int pointsPerLevel = 3; 
-            int totalPointsEarned = (hero.level - 1) * pointsPerLevel;
+            // Reset the data in the Hero class (returning all spent points)
+            hero.ResetStatAllocation();
             
-            // You'll need a way to track 'spentPoints' in your Hero class, 
-            // or simply reset the Hero's base stats and set pendingStatPoints = totalPointsEarned.
-            
-            // Simple version for your current setup:
+            // Reset the temporary UI session tracking
             tempAllocatedPoints = 0;
-            foreach (var key in new List<string>(tempStatAllocations.Keys))
+            var keys = new List<string>(tempStatAllocations.Keys);
+            foreach (var key in keys)
                 tempStatAllocations[key] = 0;
             
-            Debug.Log("Resetting current session points.");
+            Debug.Log("Full Stat Reset Performed.");
             RefreshDisplay();
         }
 
         private void SelectSlotForEquip(int slot)
         {
-            if (selectedSlotForEquip == slot)
+            // If a move was already selected from the list, equip/swap it into this slot
+            if (selectedMoveForEquip != null)
             {
-                // Clicking same slot again - unselect
-                selectedSlotForEquip = -1;
-                selectedMoveForEquip = null;
-                RefreshDisplay();
+                TryEquipMove(selectedMoveForEquip, slot);
                 return;
             }
 
-            selectedSlotForEquip = slot;
-            Debug.Log($"[HeroStatsScreenManager] Selected slot {slot + 1} for equipping");
+            // Otherwise, toggle selection of this slot
+            selectedSlotForEquip = (selectedSlotForEquip == slot) ? -1 : slot;
+            Debug.Log($"Selected slot {slot + 1}");
             RefreshDisplay();
         }
 
@@ -307,26 +302,50 @@ namespace NordeusChallenge.Unity
             }
         }
 
-        private void TryEquipMove(MoveScriptableObject move)
+        private void TryEquipMove(MoveScriptableObject move, int targetSlot = -1)
         {
-            if (selectedSlotForEquip < 0)
+            // If targetSlot is -1, it means this was called from the Move List button.
+            // Use the currently selectedSlotForEquip if available.
+            int finalSlot = (targetSlot != -1) ? targetSlot : selectedSlotForEquip;
+
+            if (finalSlot < 0)
             {
-                Debug.LogWarning("[HeroStatsScreenManager] Select a slot first!");
+                // No slot selected yet? Save this move and wait for a slot click.
+                selectedMoveForEquip = move;
+                Debug.Log($"Selected {move.name}. Now pick a slot.");
+                RefreshDisplay();
                 return;
             }
 
-            // FIX: Check if this move is already equipped in ANY other slot
+            // SWAP LOGIC: Check if this move is already in a DIFFERENT slot
+            int existingSlot = -1;
             for (int i = 0; i < Hero.MAX_EQUIPPED_MOVES; i++)
             {
                 if (hero.GetSlottedMove(i) == move)
                 {
-                    Debug.LogWarning($"[HeroStatsScreenManager] {move.name} is already equipped in slot {i + 1}!");
-                    return; // Exit here so we don't equip it twice
+                    existingSlot = i;
+                    break;
                 }
             }
 
-            hero.EquipMoveToSlot(selectedSlotForEquip, move);
+            if (existingSlot != -1)
+            {
+                // Swap: Get what is currently in the target slot
+                MoveScriptableObject moveInTarget = hero.GetSlottedMove(finalSlot);
+                
+                // Put the new move in the target, and the old target move in the previous slot
+                hero.EquipMoveToSlot(finalSlot, move);
+                hero.EquipMoveToSlot(existingSlot, moveInTarget);
+            }
+            else
+            {
+                // Normal equip
+                hero.EquipMoveToSlot(finalSlot, move);
+            }
+
+            // Reset selection state
             selectedSlotForEquip = -1;
+            selectedMoveForEquip = null;
             RefreshDisplay();
         }
 

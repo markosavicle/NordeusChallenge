@@ -3,6 +3,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using Unity.VectorGraphics;
 
 namespace NordeusChallenge.Unity
 {
@@ -15,6 +16,7 @@ namespace NordeusChallenge.Unity
         [SerializeField] private Image monsterHPBar;
         [SerializeField] private TextMeshProUGUI battleLogText;
         [SerializeField] private Button[] moveButtons;
+        [SerializeField] private SVGImage monsterGraphic;
 
         [Header("Results Overlay")]
         [SerializeField] private CanvasGroup resultsOverlay;
@@ -38,6 +40,15 @@ namespace NordeusChallenge.Unity
             {
                 Debug.LogError("[BattleUIManager] Hero or Monster is null!");
                 return;
+            }
+
+            if (monster != null && monsterGraphic != null && monster.template != null)
+            {
+                // Assign the sprite from the monster's template
+                monsterGraphic.sprite = monster.template.monsterIcon;
+                
+                // Optional: Ensure it maintains the correct aspect ratio
+                monsterGraphic.preserveAspect = true;
             }
 
             // --- PRO FIX: SUBSCRIBE TO STAT CHANGES ---
@@ -164,24 +175,23 @@ namespace NordeusChallenge.Unity
         {
             yield return new WaitForSeconds(1.5f);
 
-            bool heroWon = (winnerName == hero.Name);
-            string resultMessage = "";
-
+            bool heroWon = winnerName == hero.Name;
+            string resultMessage;
             if (heroWon)
             {
-                // Track stats BEFORE the gain to see if we leveled up
-                int levelBefore = hero.level;
-                
-                // Use the actual reward from the monster scriptable object
                 int xpGained = monster.XpReward; 
-                
-                // We'll assume RecordBattleOutcome already called GainXP
-                bool leveledUp = hero.level > levelBefore;
-
                 resultMessage = $"VICTORY!\n\nXP Gained: {xpGained}\nLevel: {hero.level}";
-                if (leveledUp)
+                
+                // Use the proper flag from RunManager
+                if (RunManager.Instance.DidLevelUpLastBattle)
                 {
                     resultMessage += "\n<color=yellow>LEVEL UP!</color>";
+                }
+
+                string learnedMove = RunManager.Instance.LastLearnedMoveName;
+                if (!string.IsNullOrEmpty(learnedMove))
+                {
+                    resultMessage += $"\n<color=cyan>Learned: {learnedMove.Trim()}</color>";
                 }
             }
             else
@@ -190,7 +200,9 @@ namespace NordeusChallenge.Unity
             }
 
             if (resultsText != null)
+            {
                 resultsText.text = resultMessage;
+            }
 
             yield return StartCoroutine(FadeInOverlay());
         }

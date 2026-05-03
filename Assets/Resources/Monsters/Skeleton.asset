@@ -23,3 +23,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 675533e6c368ad44dbdd362a3da0b475, type: 2}
   - {fileID: 11400000, guid: d53a037e743d1f64f9e95a1f6a957cce, type: 2}
   xpReward: 12
+  monsterIcon: {fileID: 3286163911610860551, guid: 1168fddaa92a2b645a96273dc863b12b, type: 3}

@@ -28,7 +28,8 @@ namespace NordeusChallenge.Unity
         public Monster CurrentMonster => currentMonster;
         public int CurrentFightNumber => 1;
         public int TotalFights => 1;
-
+        public string LastLearnedMoveName { get; private set; } = "";
+        public bool DidLevelUpLastBattle { get; private set; } = false;
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -79,11 +80,14 @@ namespace NordeusChallenge.Unity
         {
             if (currentMonster == null) return;
 
+            // Reset results from previous battle
+            LastLearnedMoveName = "";
+            DidLevelUpLastBattle = false;
+
             if (heroWon)
             {
                 // --- SMART MOVE LEARNING ---
-                // Get all moves the monster has
-                var monsterMoves = currentMonster.AvailableMoves; // Ensure Monster has a GetMoves() returning a List
+                var monsterMoves = currentMonster.AvailableMoves; 
                 List<MoveScriptableObject> unlearnedMoves = new List<MoveScriptableObject>();
 
                 foreach (var m in monsterMoves)
@@ -96,18 +100,20 @@ namespace NordeusChallenge.Unity
 
                 if (unlearnedMoves.Count > 0)
                 {
-                    // Pick a random one from only the ones we DON'T know
                     MoveScriptableObject newMove = unlearnedMoves[Random.Range(0, unlearnedMoves.Count)];
                     hero.LearnMove(newMove);
-                    Debug.Log($"[RunManager] Hero learned NEW move: {newMove.name}");
-                }
-                else
-                {
-                    Debug.Log("[RunManager] Hero already knows all moves from this monster.");
+                    LastLearnedMoveName = newMove.name; 
                 }
 
-                // XP reward
+                // --- XP & LEVEL UP CHECK ---
+                int levelBefore = hero.level;
                 hero.GainXP(currentMonster.XpReward);
+                
+                // This is the proper logic: check if the current level increased
+                if (hero.level > levelBefore)
+                {
+                    DidLevelUpLastBattle = true;
+                }
             }
             
             currentMonster = null;
@@ -141,31 +147,5 @@ namespace NordeusChallenge.Unity
             return new List<MoveScriptableObject>(hero.LearnedMoves);
         }
 
-        /// <summary>
-        /// DEPRECATED: Compatibility method for legacy ResultsScreenManager.
-        /// Returns 0 as wins are not tracked in single-monster flow.
-        /// </summary>
-        [System.Obsolete("Use single-battle system instead. Kept for backward compatibility.")]
-        public int GetWinCount()
-        {
-            return 0;
-        }
-
-        /// <summary>
-        /// DEPRECATED: Compatibility property for legacy ResultsScreenManager.
-        /// Always returns false in single-monster flow (no "run" concept).
-        /// </summary>
-        [System.Obsolete("Use single-battle system instead. Kept for backward compatibility.")]
-        public bool RunComplete => false;
-
-        /// <summary>
-        /// DEPRECATED: Compatibility method for legacy ResultsScreenManager.
-        /// Does nothing in single-monster flow.
-        /// </summary>
-        [System.Obsolete("Use SetCurrentMonster() instead.")]
-        public void SetupCurrentMonster()
-        {
-            // Legacy method - does nothing in new system
-        }
     }
 }

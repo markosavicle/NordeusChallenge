@@ -20,16 +20,21 @@ namespace NordeusChallenge.Unity
 
         public IReadOnlyList<MoveScriptableObject> LearnedMoves => learnedMoves.AsReadOnly();
         public const int MAX_EQUIPPED_MOVES = 4;
+        private const int startingHp = 100;
+        private const int startingAttack = 10;
+        private const int startingDefense = 5;
+        private const int startingSpeed = 5;
+        private const int startingLuck = 1;
 
         public Hero()
         {
             id = 1;
             name = "Hero";
-            hp = maxHp = 100;
-            attack = 10;
-            defense = 5;
-            speed = 5;
-            luck = 1;
+            hp = maxHp = startingHp;
+            attack = startingAttack;
+            defense = startingDefense;
+            speed = startingSpeed;
+            luck = startingLuck;
             level = 1;
             equippedMoveSlots = new MoveScriptableObject[4];
         }
@@ -165,10 +170,17 @@ namespace NordeusChallenge.Unity
         /// </summary>
         public void ResetStatAllocation()
         {
-            // Revert stats to base and return points
-            // This is simplified - a full system would track original values
-            pendingStatPoints = level * 3;
-            Debug.Log($"Reset stats. Available points: {pendingStatPoints}");
+            // Revert stats to starting values
+            maxHp = startingHp;
+            hp = startingHp;
+            attack = startingAttack;
+            defense = startingDefense;
+            speed = startingSpeed;
+            luck = startingLuck;
+
+            // Return all points earned through leveling (3 points per level above 1)
+            pendingStatPoints = (level - 1) * 3;
+            Debug.Log($"Reset stats to Base. Available points: {pendingStatPoints}");
         }
 
         /// <summary>

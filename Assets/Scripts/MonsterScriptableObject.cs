@@ -27,6 +27,8 @@ namespace NordeusChallenge.Unity
         // XP Reward
         public int xpReward = 10;
 
+        public Sprite monsterIcon;
+
         public override string ToString() => name;
 
         /// <summary>
